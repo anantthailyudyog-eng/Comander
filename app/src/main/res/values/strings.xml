@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">Jarvis OS</string>
+    <string name="jarvis_designation">J.A.R.V.I.S. MARK-VII</string>
+    <string name="jarvis_subtitle">AUTONOMOUS NEURAL COMMAND OS</string>
+    <string name="sign_in_with_google">Initialize Neural Link (Google Sign-In)</string>
+    <string name="auth_security_notice">Encrypted multi-user vault synced via Firebase Auth &amp; App Check.</string>
+    <string name="emergency_stop">STOP</string>
+    <string name="command_input_hint">Issue command in English, Hindi, or Hinglish…</string>
+    <string name="wake_listener_label">Wake Listener ("Jarvis")</string>
+    <string name="daily_briefing_label">Run Daily Briefing</string>
+    <string name="screen_link_label">Live Screen Link</string>
+    <string name="camera_scan_label">Camera Optical Scan</string>
+    <string name="continuous_watch_label">Continuous Watch</string>
+    <string name="tab_core">CORE</string>
+    <string name="tab_command">COMMAND</string>
+    <string name="tab_vault">VAULT</string>
+    <string name="cd_arc_reactor">Reactive Arc Reactor Voice Visualizer</string>
+    <string name="cd_emergency_stop">Emergency Stop and Reset</string>
+    <string name="cd_send_command">Transmit Command</string>
+    <string name="cd_voice_capture">Capture Voice Command</string>
+    <string name="cd_attach_media">Attach Image or File</string>
+    <string name="cd_copy_code">Copy to Clipboard</string>
+    <string name="cd_sign_out">Disconnect Neural Link</string>
+</resources>

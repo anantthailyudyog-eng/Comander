@@ -1,0 +1,6 @@
+{
+  "name": "Jarvis OS",
+  "description": "J.A.R.V.I.S. Mark-VII Autonomous OS with Gemini tool execution, bilingual voice telemetry, multimodal vision, and holographic HUD.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

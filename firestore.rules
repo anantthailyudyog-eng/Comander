@@ -1,0 +1,169 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidMemoryNote(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.category is string &&
+             data.category.size() >= 1 &&
+             data.category.size() <= 40 &&
+             data.content is string &&
+             data.content.size() >= 1 &&
+             data.content.size() <= 2000 &&
+             data.createdAt is timestamp &&
+             data.createdAt <= request.time &&
+             data.updatedAt is timestamp &&
+             data.updatedAt <= request.time;
+    }
+
+    function isValidPriorityTask(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.title is string &&
+             data.title.size() >= 1 &&
+             data.title.size() <= 200 &&
+             data.priority in ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] &&
+             data.completed is bool &&
+             data.durationSeconds is int &&
+             data.durationSeconds >= 0 &&
+             data.durationSeconds <= 86400 &&
+             data.createdAt is timestamp &&
+             data.createdAt <= request.time &&
+             data.updatedAt is timestamp &&
+             data.updatedAt <= request.time;
+    }
+
+    function isValidCustomMacro(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.name is string &&
+             data.name.size() >= 1 &&
+             data.name.size() <= 60 &&
+             data.voiceTrigger is string &&
+             data.voiceTrigger.size() <= 80 &&
+             data.promptCommand is string &&
+             data.promptCommand.size() >= 1 &&
+             data.promptCommand.size() <= 1500 &&
+             data.iconKey is string &&
+             data.iconKey.size() >= 1 &&
+             data.iconKey.size() <= 30 &&
+             data.createdAt is timestamp &&
+             data.createdAt <= request.time &&
+             data.updatedAt is timestamp &&
+             data.updatedAt <= request.time;
+    }
+
+    function isValidWriterDocument(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.title is string &&
+             data.title.size() >= 1 &&
+             data.title.size() <= 120 &&
+             data.docType in ['EMAIL', 'CODE', 'REPORT', 'SCRIPT', 'NOTE'] &&
+             data.tone is string &&
+             data.tone.size() >= 1 &&
+             data.tone.size() <= 40 &&
+             data.content is string &&
+             data.content.size() <= 20000 &&
+             data.createdAt is timestamp &&
+             data.createdAt <= request.time &&
+             data.updatedAt is timestamp &&
+             data.updatedAt <= request.time;
+    }
+
+    match /users/{userId} {
+      match /memories/{memoryId} {
+        allow get: if isOwner(userId) && isValidId(memoryId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(memoryId) &&
+                         incoming().keys().hasAll(['userId', 'category', 'content', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'category', 'content', 'createdAt', 'updatedAt']) &&
+                         isValidMemoryNote(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidId(memoryId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidMemoryNote(incoming(), userId) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['category', 'content', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(memoryId);
+      }
+
+      match /tasks/{taskId} {
+        allow get: if isOwner(userId) && isValidId(taskId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(taskId) &&
+                         incoming().keys().hasAll(['userId', 'title', 'priority', 'completed', 'durationSeconds', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'title', 'priority', 'completed', 'durationSeconds', 'createdAt', 'updatedAt']) &&
+                         isValidPriorityTask(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidId(taskId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidPriorityTask(incoming(), userId) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'priority', 'completed', 'durationSeconds', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(taskId);
+      }
+
+      match /macros/{macroId} {
+        allow get: if isOwner(userId) && isValidId(macroId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(macroId) &&
+                         incoming().keys().hasAll(['userId', 'name', 'voiceTrigger', 'promptCommand', 'iconKey', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'name', 'voiceTrigger', 'promptCommand', 'iconKey', 'createdAt', 'updatedAt']) &&
+                         isValidCustomMacro(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidId(macroId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidCustomMacro(incoming(), userId) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'voiceTrigger', 'promptCommand', 'iconKey', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(macroId);
+      }
+
+      match /documents/{docId} {
+        allow get: if isOwner(userId) && isValidId(docId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(docId) &&
+                         incoming().keys().hasAll(['userId', 'title', 'docType', 'tone', 'content', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'title', 'docType', 'tone', 'content', 'createdAt', 'updatedAt']) &&
+                         isValidWriterDocument(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidId(docId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidWriterDocument(incoming(), userId) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'docType', 'tone', 'content', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(docId);
+      }
+    }
+  }
+}
